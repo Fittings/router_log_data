@@ -1,10 +1,19 @@
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::ops::Add;
-
+use std::fmt;
 
 static FILE_LOCATION: &'static str = "C:/Users/Cameron/AppData/Local/visualsyslog/syslog1";
+
+fn main() {
+    let f = File::open(FILE_LOCATION).expect("Unable to open file");
+
+    let sys_log_data = retrieve_sys_log_data(BufReader::new(&f));
+
+    sys_log_data.print_lines();
+    println!("Disconnected {} times.", sys_log_data.get_disconnect_count());
+}
+
 
 #[derive(Debug)]
 struct SysLogData {
@@ -12,15 +21,39 @@ struct SysLogData {
 }
 
 impl SysLogData {
+    fn new<'b>() -> Self {
+        SysLogData {
+            log_lines: Vec::new(),
+        }
+    }
+
     fn lines(&self) -> &Vec<SysLogLine> {
         &self.log_lines
+    }
+
+    fn add_line<'b>(&'b mut self, line: SysLogLine) {
+        self.log_lines.push(line);
+    }
+
+    fn print_lines(&self) {
+        for line in self.log_lines.iter() {
+            println!("{:?}", line);
+        }
+    }
+
+    fn get_disconnect_count(&self) -> i32 {
+        let mut count = 0;
+        for line in self.log_lines.iter() {
+            count += 1;
+        }
+        count
     }
 }
 
 #[derive(Debug)]
 struct SysLogLine {
-    //time
     ip_address: String,
+    time: String,
     hostname: String,
     facility: String,
     priority: String,
@@ -28,38 +61,29 @@ struct SysLogLine {
     message: String,
 }
 
-
-//Take a text file
-//Read each line and convert into a line struct
-//Place all line structs into a general data struct.
-
-fn main() {
-    let f = File::open(FILE_LOCATION).expect("Unable to open file");
-
-    let sys_log_data = retrieve_sys_log_data(BufReader::new(&f));
-
-    for line in sys_log_data.log_lines {
-        println!("{:?}", line);
+impl fmt::Display for SysLogLine {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} {} {} {} {} {} ",
+              &self.ip_address, self.time, self.hostname, self.facility, self.priority, self.tag, self.message)
     }
+
 }
 
-fn retrieve_sys_log_data<R: BufRead>(reader : R) -> SysLogData {
-    let mut log_lines : Vec<SysLogLine> = Vec::new();
+fn retrieve_sys_log_data<'a, R: BufRead>(reader : R) -> SysLogData {
+    let mut data = SysLogData::new();
 
     for line in reader.lines() {
-        let line = convert_line(line.unwrap());
+        let log_line = convert_line(line.unwrap());
 
-        log_lines.push(line);
+        data.add_line(log_line);
     }
 
-
-    SysLogData {
-        log_lines: log_lines,
-    }
+    data
 }
 
 fn convert_line(line_string: String) -> SysLogLine {
     let mut ip_address = String::new();
+    let mut time = String::new();
     let mut hostname = String::new();
     let mut facility = String::new();
     let mut priority = String::new();
@@ -68,7 +92,7 @@ fn convert_line(line_string: String) -> SysLogLine {
     for (i, token) in line_string.split("\t").enumerate() {
         match i {
             0 => ip_address += token,
-            1 => (),
+            1 => time += token,
             2 => hostname += token,
             3 => facility += token,
             4 => priority += token,
@@ -85,6 +109,7 @@ fn convert_line(line_string: String) -> SysLogLine {
 
     SysLogLine {
         ip_address: ip_address,
+        time: time,
         hostname: hostname,
         facility: facility,
         priority: priority,
@@ -92,25 +117,6 @@ fn convert_line(line_string: String) -> SysLogLine {
         message: msg,
     }
 }
-
-
-
-//fn read_lines<R: BufRead>(reader: &mut R) {
-//    let mut count = 0;
-//
-//
-//        let line_string = line.unwrap();
-
-//            println!("{:?} ", log_line);
-//
-//        }
-//        println!("");
-//
-//    }
-//
-//
-//    println!("There are {} lines.", count);
-//}
 
 
 
