@@ -1,0 +1,6 @@
+[package]
+name = "syslog_reader"
+version = "0.1.0"
+authors = ["Cameron Milsom <cameron.milsom@gmail.com>"]
+
+[dependencies]

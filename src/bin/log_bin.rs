@@ -1,11 +1,16 @@
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::fmt;
+//
+extern crate syslog_reader;
+////mod sys_log;
+use syslog_reader::sys_log::sys_log_data;
+
 
 static FILE_LOCATION: &'static str = "C:/Users/Cameron/AppData/Local/visualsyslog/syslog1";
 
 fn main() {
+    println!("Hello World");
     let f = File::open(FILE_LOCATION).expect("Unable to open file");
 
     let sys_log_data = retrieve_sys_log_data(BufReader::new(&f));
@@ -15,62 +20,10 @@ fn main() {
 }
 
 
-#[derive(Debug)]
-struct SysLogData {
-    log_lines: Vec<SysLogLine>,
-}
 
-impl SysLogData {
-    fn new<'b>() -> Self {
-        SysLogData {
-            log_lines: Vec::new(),
-        }
-    }
 
-    fn lines(&self) -> &Vec<SysLogLine> {
-        &self.log_lines
-    }
-
-    fn add_line<'b>(&'b mut self, line: SysLogLine) {
-        self.log_lines.push(line);
-    }
-
-    fn print_lines(&self) {
-        for line in self.log_lines.iter() {
-            println!("{:?}", line);
-        }
-    }
-
-    fn get_disconnect_count(&self) -> i32 {
-        let mut count = 0;
-        for line in self.log_lines.iter() {
-            count += 1;
-        }
-        count
-    }
-}
-
-#[derive(Debug)]
-struct SysLogLine {
-    ip_address: String,
-    time: String,
-    hostname: String,
-    facility: String,
-    priority: String,
-    tag: String,
-    message: String,
-}
-
-impl fmt::Display for SysLogLine {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {} {} {} {} {} ",
-              &self.ip_address, self.time, self.hostname, self.facility, self.priority, self.tag, self.message)
-    }
-
-}
-
-fn retrieve_sys_log_data<'a, R: BufRead>(reader : R) -> SysLogData {
-    let mut data = SysLogData::new();
+fn retrieve_sys_log_data<'a, R: BufRead>(reader : R) -> sys_log_data::SysLogData {
+    let mut data = sys_log_data::SysLogData::new();
 
     for line in reader.lines() {
         let log_line = convert_line(line.unwrap());
@@ -81,7 +34,7 @@ fn retrieve_sys_log_data<'a, R: BufRead>(reader : R) -> SysLogData {
     data
 }
 
-fn convert_line(line_string: String) -> SysLogLine {
+fn convert_line(line_string: String) -> sys_log_data::SysLogLine {
     let mut ip_address = String::new();
     let mut time = String::new();
     let mut hostname = String::new();
@@ -107,7 +60,8 @@ fn convert_line(line_string: String) -> SysLogLine {
         msg.push_str(string.trim());
     }
 
-    SysLogLine {
+
+    sys_log_data::SysLogLine {
         ip_address: ip_address,
         time: time,
         hostname: hostname,
