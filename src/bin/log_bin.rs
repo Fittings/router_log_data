@@ -7,7 +7,7 @@ extern crate syslog_reader;
 use syslog_reader::sys_log::sys_log_data;
 
 
-static FILE_LOCATION: &'static str = "C:/Users/Cameron/AppData/Local/visualsyslog/syslog1";
+static FILE_LOCATION: &'static str = "%HOMEPATH%/AppData/Local/visualsyslog/syslog1";
 
 fn main() {
     println!("Hello World");
